@@ -1,0 +1,9 @@
+---
+### releaseUpgrade playbook #######################################################################
+
+    current_distro: buster
+    new_distro: bullseye
+
+######################################################################################    
+    ansible: "# Ansible managed\n# Last modified: {{ ansible_date_time.date }}\n"
+   

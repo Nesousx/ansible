@@ -1,0 +1,56 @@
+---
+# tasks file for roles/release_upgrade
+- name: install system updates
+  apt:
+    upgrade: dist
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Find all of the files inside this directory
+  find:
+    paths: "/etc/apt/sources.list.d"
+    recurse: no
+    patterns: "*.list"
+  register: repos
+
+- name: Replace "{{ current_distro }}" with "{{ new_distro }}" in the sources files
+  replace:
+    path: "{{ item.path }}"
+    regexp: "{{ current_distro }}"
+    replace: "{{ new_distro }}"
+  with_items: "{{ repos.files }}"
+
+- name: Template for {{ new_distro }} sources
+  template:
+    src: "{{ new_distro }}_sources.list.j2"
+    dest: /etc/apt/sources.list
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Clean apt
+  apt:
+    autoclean: yes
+    autoremove: yes
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Do a full upgrade
+  apt:
+    upgrade: full
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Check if servers needs to be rebooted
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+
+- name: Reboot system, only if required
+  reboot:
+    msg: "Reboot initiated by Ansible for RPi kernel updates"
+    connect_timeout: 5
+    reboot_timeout: 300
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: uptime
+  when: reboot_required.stat.exists == True

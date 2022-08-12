@@ -1,0 +1,5 @@
+- name: Upgrade Buster to Bullseye
+  hosts: release_upgrade
+  become: yes
+  roles:
+    - release_upgrade
