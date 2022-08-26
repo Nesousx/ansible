@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+{{ ansible }}
+
+#!/usr/bin/env bash
+
+
+
+curl -s -F "token=aftrffn563ini5xxcjvsut4cj1igu2" \
+    -F "user=u6j2o9aoyh7mbo3xn8u3g8mzaphzt1" \
+    -F "title=`hostname`" \
+    -F "message=$1" https://api.pushover.net/1/messages.json

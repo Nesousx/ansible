@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+{{ ansible }}
+
+### Send Alert via TG!
+
+## Telegram variables
+tg_chat_id="{{ tg_chat_id }}"
+tg_api_token="{{ tg_api_token }}"
+tg_url="https://api.telegram.org/bot$tg_api_token/sendMessage"
+alert_message=$1
+
+### Telegram message
+#curl -s  -d "chat_id" "https://api.telegram.org/bot$tg_api_token/sendMessage?chat_id=$tg_chat_id&text=`hostname` - '$1'"
+curl -s  -F "chat_id=$tg_chat_id" --form-string "text=`hostname` - $alert_message" $tg_url >/dev/null

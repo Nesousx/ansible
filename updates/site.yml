@@ -1,0 +1,6 @@
+---
+- name: Run system updates
+  hosts: updates
+  become: true
+  roles:
+    - role: main

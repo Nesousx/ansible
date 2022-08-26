@@ -1,0 +1,11 @@
+---
+# tasks file for roles/pre
+- name: Create new machine snapshot
+  community.general.proxmox_snap:
+    api_user: "{{ proxmox_api_user }}"
+    api_password: "{{ proxmox_api_pass }}"
+    api_host: ominousinator
+    hostname: "{{ item }}"
+    state: present
+    snapname: "{{ proxmox_snap_name }}"
+  with_items: "{{ proxmox_vm_snap }}"

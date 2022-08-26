@@ -1,0 +1,200 @@
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Add deploy user
+  user: 
+    name: "{{ common_deploy_user_name }}" 
+    password: "{{ common_deploy_user_pass }}"
+    state: present
+    shell: /bin/bash
+
+- name: Add authorized keys for deploy user
+  authorized_key: user={{ common_deploy_user_name }} key="{{ lookup('file', item) }}"
+  with_items: "{{ common_deploy_public_keys }}"
+
+- name: Add regular user
+  user:
+    name: "{{ common_regular_user_name }}"
+    state: present
+    shell: /usr/bin/zsh
+
+- name: Add authorized keys for deploy user
+  authorized_key: user={{ common_regular_user_name }} key="{{ lookup('file', item) }}"
+  with_items: "{{ common_regular_public_keys }}"
+
+- name: Create dir if it does not exist
+  file:
+    path: "{{ item }}"
+    recurse: yes
+    owner: "{{ common_regular_user_name }}"
+    group: "{{ common_regular_user_group }}"
+    state: directory
+    mode: '0755'
+    modification_time: preserve
+    access_time: preserve
+  with_items: ["/srv/bkp","/srv/data/bkp","/srv/data/envs","/srv/data/scripts","/srv/data/ssl"]
+
+- name: Install required packages for common role
+  apt:
+    pkg:
+    - aptitude
+    - apt-transport-https
+    - unattended-upgrades
+    - wget
+    - rsync
+    - net-tools
+    - curl
+    - dnsutils
+    - vim
+    - tmux
+    - mosh
+    - zsh
+    - sudo
+    - lvm2
+    - postfix
+    - mailutils 
+    - libsasl2-2 
+    - ca-certificates 
+    - libsasl2-modules
+    - gpg
+    - auditd
+    - audispd-plugins
+    - man
+    - haveged
+    update_cache: yes
+      
+- name: Template for /etc/aliases
+  template:
+    src: aliases.j2
+    dest: /etc/aliases
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Make sure we have a 'wheel' group
+  group:
+    name: wheel
+    state: present
+    
+- name: Add deploy user to sudoers
+  lineinfile: dest=/etc/sudoers
+              regexp="^%wheel"
+              line="{{ common_deploy_user_name }} ALL=(ALL) NOPASSWD:ALL"
+              validate="visudo -cf %s"
+              state=present
+
+- name: Add deploy user to sudoers
+  lineinfile: dest=/etc/sudoers
+              regexp="^%wheel"
+              line="{{ common_regular_user_name }} ALL=(ALL) NOPASSWD:ALL"
+              validate="visudo -cf %s"
+              state=present
+
+- name: Set a password for Bobby
+  ansible.builtin.user:
+    name: bobby
+    update_password: always
+    password: "{{ bobby_pass }}"
+
+
+- name: Template for TG notif
+  template:
+    src: send_tg.j2
+    dest: /srv/data/scripts/send_tg.sh
+    owner: "{{ common_regular_user_name }}"
+    group: "{{ common_regular_user_group }}"
+    mode: '0755'
+
+- name: Template for pushover notif
+  template:
+    src: send_push.j2
+    dest: /srv/data/scripts/send_push.sh
+    owner: "{{ common_regular_user_name }}"
+    group: "{{ common_regular_user_group }}"
+    mode: '0755'
+
+- name: Template for main.cf
+  template:
+    src: main.cf.j2
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: '0644'
+  
+- name: check if sasl_passwd exists
+  stat: 
+    path: /etc/postfix/sasl_passwd
+  register: sasl_passwd
+
+- name: Template for sasl_passwd
+  template:
+    src: sasl_passwd.j2
+    dest: /etc/postfix/sasl_passwd
+    owner: root
+    group: root
+    mode: '0600'
+  notify:
+    - restart postfix
+
+- name: Hash pass for postfix
+  command: postmap hash:/etc/postfix/sasl_passwd
+  notify: restart postfix
+
+- name: Change ssh port
+  lineinfile: dest=/etc/ssh/sshd_config
+              regexp="^Port\s"
+              line="Port {{ common_ssh_port }}"
+              state=present
+  notify: restart ssh
+
+- name: Disallow root SSH access
+  lineinfile: dest=/etc/ssh/sshd_config
+              regexp="^PermitRootLogin"
+              line="PermitRootLogin no"
+              state=present
+  notify: restart ssh
+
+- name: Block password auth
+  lineinfile: dest=/etc/ssh/sshd_config
+              regexp="^PasswordAuthentication"
+              line="PasswordAuthentication no"
+              state=present
+  notify: restart ssh
+
+- name: Template for auditd
+  template:
+    src: audit.rules.j2
+    dest: "/etc/audit/rules.d/audit.rules"
+    owner: root
+    group: root
+    mode: '0640'
+  notify: restart auditd
+
+- name: Template for vimrc
+  template:
+    src: vimrc.j2
+    dest: "/home/{{ common_regular_user_name }}/.vimrc"
+    owner: "{{ common_regular_user_name }}"
+    group: "{{ common_regular_user_group }}"
+    mode: '0644'
+
+- name: Template for zshrc
+  template:
+    src: zshrc.j2
+    dest: "/home/{{ common_regular_user_name }}/.zshrc"
+    owner: "{{ common_regular_user_name }}"
+    group: "{{ common_regular_user_group }}"
+    mode: '0644'
+  when: ansible_distribution_release == "kali-rolling"
+
+- name: Set python3 as defaults
+  command: update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Make sure a havegd is running
+  systemd:
+    daemon_reload: yes
+    state: started
+    enabled: yes
+    name: haveged

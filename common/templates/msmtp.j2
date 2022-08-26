@@ -1,0 +1,18 @@
+{{ ansible }}
+
+defaults
+auth           on
+tls            on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+syslog LOG_MAIL
+
+account	       fastmail
+host           smtp.fastmail.com
+port           587
+from           noreply@hote.com
+user           {{ fastmail_user }}
+password       {{ fastmail_pass }}
+
+account default : fastmail
+
+aliases               /etc/aliases

@@ -1,0 +1,33 @@
+{{ ansible }}
+
+# See /usr/share/postfix/main.cf.dist for a commented, more complete version
+
+#myhostname=fqdn 
+
+myorigin = $myhostname
+
+smtpd_banner = $myhostname ESMTP $mail_name (Debian/GNU)
+biff = no
+
+# appending .domain is the MUA's job.
+append_dot_mydomain = yes
+
+# Uncomment the next line to generate "delayed mail" warnings
+#delay_warning_time = 4h
+
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+mydestination = $myhostname, localhost.$mydomain, localhost
+relayhost = {{ smtp_server }}:{{ smtp_port }}
+smtp_use_tls = yes
+smtp_sasl_auth_enable = yes
+smtp_sasl_security_options = noanonymous
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_tls_CAfile = /etc/ssl/certs/Entrust_Root_Certification_Authority.pem
+#smtp_tls_session_cache_database = btree:/var/lib/postfix/smtp_tls_session_cache
+#smtp_tls_session_cache_timeout = 3600s
+mynetworks = 127.0.0.0/8
+inet_interfaces = loopback-only
+recipient_delimiter = +
+
+compatibility_level = 2

@@ -1,0 +1,13 @@
+    - name: restart ssh
+      service: name=ssh state=restarted
+      when: ansible_distribution == "Ubuntu" or ansible_distribution == "Fedora" or ansible_distribution == "Debian"
+      
+    - name: restart ssh
+      service: name=sshd state=restarted
+      when: ansible_distribution == "CentOS" 
+
+    - name: restart postfix
+      service: name=postfix state=restarted
+
+    - name: restart auditd
+      service: name=auditd state=restarted

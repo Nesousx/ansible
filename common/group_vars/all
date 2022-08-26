@@ -1,0 +1,31 @@
+---
+### common playbook #######################################################################
+
+    common_domain: hote.com
+
+    basic_pass: "{{ vault_basic_pass }}" 
+    
+    fastmail_user: XXXXX@fastmail.com
+    fastmail_pass: "{{ vault_fastmail_pass }}"
+
+    mail_domain: nesomail.com
+
+    common_logwatch_email: logs@hote.com
+    
+    common_regular_user_name: nesousx
+    common_regular_user_group: nesousx
+
+    common_regular_public_keys:
+      - id_nesousx.pub
+
+    common_deploy_user_name: bobby
+    common_deploy_user_pass: "{{ vault_common_deploy_user_pass }}"
+    common_deploy_public_keys: 
+      - id_ansible.pub
+    
+    common_ssh_port: 22
+
+    timezone: Europe/Paris
+######################################################################################    
+    ansible: "# Ansible managed\n# Last modified: {{ ansible_date_time.date }}\n"
+   

@@ -1,0 +1,7 @@
+- name: Prepare system with base configs
+  hosts: common
+  become: yes
+  vars_files:
+    - group_vars/vault
+  roles:
+    - common
