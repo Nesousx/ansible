@@ -4,7 +4,7 @@
   community.general.proxmox_snap:
     api_user: "{{ proxmox_api_user }}"
     api_password: "{{ proxmox_api_pass }}"
-    api_host: ominousinator
+    api_host: "{{ proxmox_api_pass }}"
     hostname: "{{ item }}"
     state: present
     snapname: "{{ proxmox_snap_name }}"
