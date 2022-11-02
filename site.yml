@@ -1,0 +1,44 @@
+---
+- name: Prepare system with base configs
+  hosts: common
+  become: yes
+  vars_files:
+    - group_vars/vault
+  roles:
+    - common
+
+- name: Snapshots VMs before update
+  hosts: take_snap
+  become: yes
+  vars_files:
+    - group_vars/vault
+  roles:
+    - take_snap
+
+- name: Delete snapshots
+  hosts: del_snap
+  become: yes
+  vars_files:
+    - group_vars/vault
+  roles:
+    - del_snap
+
+- name: Upgrade Buster to Bullseye
+  hosts: release_upgrade
+  become: yes
+  roles:
+    - release_upgrade
+
+- name: Run system updates
+  hosts: updates
+  become: true
+  roles:
+    - role: main
+
+- name: Install snmpd
+  hosts: snmpd
+  vars_files:
+    - group_vars/vault
+  become: yes
+  roles:
+    - snmpd

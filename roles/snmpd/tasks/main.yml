@@ -1,0 +1,90 @@
+---
+- name: Install snmpd for deb systems
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - snmp
+    - snmpd
+    - rsyslog
+    state: present
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Install snmpd for rpm systems
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - net-snmp
+    - net-snmp-utils
+    - rsyslog
+    state: present
+  when: ansible_distribution == "CentOS" or ansible_distribution == "Fedora"
+
+- name: Stop service snmpd, if running
+  service:
+    name: snmpd
+    state: stopped     
+
+- template:
+    src: snmpd.j2
+    dest: /etc/snmp/snmpd.conf
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Add snmp user
+  lineinfile: 
+    path: /var/lib/snmp/snmpd.conf
+    regexp: '^# '
+    insertafter: '^# '
+    line: "createUser {{ snmp_user }} SHA {{ snmp_auth }} AES {{ snmp_priv }}"
+    state: present
+  when: ansible_distribution == "Ubuntu" or ansible_distribution == "Debian"
+
+- name: Add snmp user
+  lineinfile:
+    path: /var/lib/net-snmp/snmpd.conf
+    regexp: '^# '
+    insertafter: '^# '
+    line: "createUser {{ snmp_user }} SHA  {{ snmp_auth }} AES {{ snmp_priv }}"
+    state: present
+  when: ansible_distribution == "CentOS"
+
+- name: Start service snmpd, if running
+  service:
+    name: snmpd
+    state: started
+
+- template:
+    src: remote_rsyslog.conf.j2
+    dest: /etc/rsyslog.d/remote.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Stop service rsyslog, if running
+  service:
+    name: rsyslog
+    state: restarted  
+
+- name: Register host with LibreNMS
+  uri:
+    url: "{{ librenms_api_url }}"
+    validate_certs: no
+    method: POST
+    body: 
+      hostname: "{{ inventory_hostname }}"
+      #hostname: "{{ ansible_hostname }}"
+      #description: "{{ ansible_hostname }}"
+      version: v3
+      authlevel: authPriv
+      authname: "{{ snmp_user }}"
+      authpass: "{{ snmp_auth }}"
+      authalgo: SHA
+      cryptopass: "{{ snmp_priv }}"
+      cryptoalgo: AES
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+      X-Auth-Token: "{{ librenms_token }}"

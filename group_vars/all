@@ -1,0 +1,66 @@
+### common playbook #######################################################################
+
+    common_domain: domain.tld
+    common_hostname: domain
+
+    basic_pass: "{{ vault_basic_pass }}" 
+
+    gmail_user: XXXXXXX
+    gmail_pass: "{{ vault_gmail_pass }}"
+    
+    fastmail_user: XXXXXX
+    fastmail_pass: "{{ vault_fastmail_pass }}"
+
+    mail_domain: domain.tld
+
+    common_logwatch_email: XXXX
+    
+    common_regular_user_name: XXXX
+    common_regular_user_group: XXXX
+
+    common_regular_public_keys:
+      - id_nesousx.pub
+
+    common_deploy_user_name: bobby
+    common_deploy_user_pass: "{{ vault_common_deploy_user_pass }}"
+    common_deploy_public_keys: 
+      - id_ansible.pub
+    
+    common_ssh_port: 22
+
+    timezone: Europe/Paris
+
+######################################################################################    
+
+    current_distro: buster
+    new_distro: bullseye
+
+######################################################################################
+
+    proxmox_snap_name: Before_Bulls
+ 
+######################################################################################  
+
+    proxmox_api_host: XXXX
+    proxmox_api_pass: "{{ vault_proxmox_api_pass }}"
+    proxmox_api_user: "XXXX@pam"
+    proxmox_vm_snap: "['vm1', 'vm2']"
+
+######################################################################################     
+
+
+    bobby_pass: "{{ vault_bobby_pass }}"
+
+###################################################################################### 
+    
+    ansible: "# Ansible managed\n# Last modified: {{ ansible_date_time.date }}\n"
+
+######################################################################################  
+
+    snmp_user: XXXXXX
+    snmp_community: "{{ vault_snmp_community }}"
+    snmp_auth: "{{ vault_snmp_auth }}"
+    snmp_priv: "{{ vault_snmp_priv }}"
+    snmp_server: fq.dn.com
+
+######################################################################################   
